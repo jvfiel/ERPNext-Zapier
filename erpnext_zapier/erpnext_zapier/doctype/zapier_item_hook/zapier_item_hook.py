@@ -14,29 +14,6 @@ class ZapierItemHook(Document):
 # bench execute erpnext_zapier.erpnext_zapier.doctype.zapier_item_hook.zapier_item_hook.test_zap
 def test_zap():
     doc = frappe.get_doc("Item", "ABC")
-    # print doc.as_dict()
-    # import requests
-    #
-    # new_dict = {}
-    # for key, value in doc.as_dict().iteritems():
-    #     if value:
-    #         new_dict.update({key: value})
-    #         # print "not None and not []"
-    #         # print key, "=", value
-    #
-    # print new_dict
-    # r = requests.post("https://hooks.zapier.com/hooks/catch/2929690/zdizho/",
-    #                   data=new_dict)
-    #
-    # print r.headers
-    # print "###########################"
-    # print "###########################"
-    # print "###########################"
-    # print "###########################"
-    # print "###########################"
-    # print "###########################"
-    # print(r.status_code, r.reason)
-    # print(r.text[:300] + '...')
     zap(doc)
 
 
@@ -54,12 +31,6 @@ def zap(doc,request_method="Put"):
     import requests
 
     # new_dict = {}
-    print request_method
-    print request_method
-    print request_method
-    print request_method
-    print request_method
-    print request_method
     if request_method != "Post":
         new_dict = frappe.db.sql("""SELECT {0} FROM `tabItem` WHERE name='{1}'""".format(fields, doc.name), as_dict=True)[0]
         print new_dict
@@ -76,49 +47,37 @@ def zap(doc,request_method="Put"):
         for i, field in enumerate(frappe.get_doc("Zapier Item Hook").item_fields):
             clean_dict.update({field: doc_dict[field.field_name]})
 
+    if frappe.db.get_value("Zapier Item Hook", None, "zapier_hook_url"):
 
-    # print new_dict
-    if request_method == "Put":
-        r = requests.put(frappe.db.get_value("Zapier Item Hook", None, "zapier_hook_url"),
-                          data=clean_dict)
-    elif request_method == "Post":
-        r = requests.post(frappe.db.get_value("Zapier Item Hook", None, "zapier_hook_url"),
-                         data=clean_dict)
-    elif request_method == "Delete":
-        r = requests.delete(frappe.db.get_value("Zapier Item Hook", None, "zapier_hook_url"),
-                         data=clean_dict)
+        # print new_dict
+        if request_method == "Put":
+            r = requests.put(frappe.db.get_value("Zapier Item Hook", None, "zapier_hook_url"),
+                              data=clean_dict)
+        elif request_method == "Post":
+            r = requests.post(frappe.db.get_value("Zapier Item Hook", None, "zapier_hook_url"),
+                             data=clean_dict)
+        elif request_method == "Delete":
+            r = requests.delete(frappe.db.get_value("Zapier Item Hook", None, "zapier_hook_url"),
+                             data=clean_dict)
 
-    print r.headers
-    print "###########################"
-    print "###########################"
-    print "###########################"
-    print "###########################"
-    print "###########################"
-    print "###########################"
-    print(r.status_code, r.reason)
-    print(r.text[:300] + '...')
+        print r.headers
+        print "###########################"
+        print "###########################"
+        print "###########################"
+        print "###########################"
+        print "###########################"
+        print "###########################"
+        print(r.status_code, r.reason)
+        print(r.text[:300] + '...')
+
+    else:
+        frappe.publish_realtime(event='msgprint',
+                                message='Zapier not setup.',
+                                user=frappe.session.user)
 
 
 # bench execute erpnext_zapier.erpnext_zapier.doctype.zapier_item_hook.zapier_item_hook.validate
 def validate(doc, method):
-    # print doc.as_dict()
-    # import requests
-    # r = requests.post("https://hooks.zapier.com/hooks/catch/2929690/zdizho/",
-    #                   data=doc.as_dict())
-    # print "###########################"
-    # print "###########################"
-    # print "###########################"
-    # print "###########################"
-    # print "###########################"
-    # print "###########################"
-    # print(r.status_code, r.reason)
-    # print(r.text[:300] + '...')
-    print doc.name
-    print doc.name
-    print doc.name
-    print doc.name
-    print doc.name
-    print doc.name
     exists = frappe.db.sql("""SELECT Count(*) FROM `tabItem` WHERE name='{0}'""".format(doc.name))
     if exists[0][0] > 0:
         zap(doc, request_method="Put")
@@ -128,3 +87,18 @@ def after_insert(doc,method):
 
 def on_trash(doc,method):
     zap(doc,request_method="Delete")
+
+
+def test_zap2():
+    import requests
+
+    # try:
+    r = requests.post("https://hooks.zapier.com/hooks/catch/2929690/zdizho/",
+                      data={"item_code":"hello world"})
+
+    print r.headers
+    print "###########################"
+    print(r.status_code, r.reason)
+    print(r.text[:300] + '...')
+    # except:
+    #     pass
